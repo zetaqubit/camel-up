@@ -66,12 +66,12 @@ class TracksTest(unittest.TestCase):
     ], True),
 
   ])
-  def test_is_game_over(self, state, is_over):
+  def test_is_end_of_game(self, state, is_over):
     state = np.array(state)
     shape = state.shape
     t = board.Tracks(n_spaces=shape[1]-2, n_camels=shape[0]-2)
     t.state = state
-    self.assertEqual(is_over, t.is_game_over())
+    self.assertEqual(is_over, t.is_end_of_game())
 
 
   @parameterized.expand([

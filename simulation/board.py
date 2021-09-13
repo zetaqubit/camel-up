@@ -1,3 +1,13 @@
+"""Representation of the game state.
+
+Conventions:
+  - camels range in [1, n_camels]
+  - tracks range in [1, n_camels]
+  - valid spaces range in [1, n_spaces]
+  - special space 0 is starting zone
+  - special space n_spaces+1 in finish zone
+
+"""
 import numpy as np
 
 class Tracks:
@@ -30,14 +40,14 @@ class Tracks:
     for i in range(1, n_camels + 1):
       self.state[-i, 0] = i
 
-  def is_game_over(self):
+  def is_end_of_game(self):
     return np.any(self.state[-self.n_camels:, -1] > 0)
 
   def is_legal_state(self):
     # Check plus/minus tiles.
     # Rule #1: tiles must be in the main track (not before/after).
     if np.any(self.state[:2, 0]):
-      return False, 'Plus/Minus in prep zone.'
+      return False, 'Plus/Minus in starting zone.'
     if np.any(self.state[:2, -1]):
       return False, 'Plus/Minus in finish zone.'
 
