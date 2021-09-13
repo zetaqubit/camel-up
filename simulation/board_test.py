@@ -248,6 +248,20 @@ class TracksTest(unittest.TestCase):
         [0, 0, 0, 0, 0, 1],
         [0, 0, 0, 0, 3, 0],
      ], False),
+    ([
+        [0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0],
+        [3, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0],
+     ], True),
+    ([
+        [0, 0, 4, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [3, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+     ], False),
   ])
   def test_is_legal_state_camels(self, state, is_legal):
     state = np.array(state)

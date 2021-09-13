@@ -68,6 +68,11 @@ class Tracks:
       if np.any((1 - track_mask) & above_tracks_mask):
         return False, 'Camels not stacked from bottom track upwards.'
 
+    # Rule #3: no camel can be on a tile with plus/minus.
+    camels_mask = self.state[-self.n_camels:, :] != 0
+    if np.any(camels_mask & mask_01):
+      return False, 'Camels cannot be on a tile with plus/minus.'
+
     return True, 'Legal'
 
   def print(self):
