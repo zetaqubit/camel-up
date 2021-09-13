@@ -6,6 +6,7 @@ import numpy as np
 from parameterized import parameterized
 
 from simulation import board
+from simulation import moves
 
 
 class TracksTest(unittest.TestCase):
@@ -270,3 +271,57 @@ class TracksTest(unittest.TestCase):
     t.state = state
     legal, reason = t.is_legal_state()
     self.assertEqual(is_legal, legal, msg=reason)
+
+  @parameterized.expand([
+    ([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [3, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+     ], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [3, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+     ], [(1, 2)]),
+    ([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [3, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+     ], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0],
+        [0, 3, 0, 1, 0],
+     ], [(3, 1), (2, 1), (1, 3)]),
+    ([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 3, 0, 0, 0],
+        [0, 2, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+     ], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 3],
+        [0, 0, 0, 0, 2],
+        [0, 0, 0, 0, 1],
+     ], [(1, 3)]),
+  ])
+  def test_apply_camel_move(self, state, end_state, moves_list):
+    state, end_state = np.array(state), np.array(end_state)
+    shape = state.shape
+    t = board.Tracks(n_spaces=shape[1]-2, n_camels=shape[0]-2)
+    t.state = state
+
+    for move in moves_list:
+      t.apply_move(moves.CamelMove(*move))
+    np.testing.assert_array_equal(t.state, end_state)
+
+
+

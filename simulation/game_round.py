@@ -5,9 +5,10 @@ from simulation import moves
 
 class GameRound:
   def __init__(self, n_camels=5, n_players=2, n_max_roll=3):
+    self.n_camels = n_camels
     self.n_players = n_players
     self.n_max_roll = n_max_roll
-    self.camels_not_moved = list(range(1, n_camels+1))
+    self.start_new_round()
 
   def move_camel_random(self):
     i = np.random.randint(len(self.camels_not_moved))
@@ -30,4 +31,7 @@ class GameRound:
 
   def is_end_of_round(self):
     return len(self.camels_not_moved) == 0
+
+  def start_new_round(self):
+    self.camels_not_moved = list(range(1, self.n_camels+1))
 

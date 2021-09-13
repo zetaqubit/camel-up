@@ -10,6 +10,12 @@ Conventions:
 """
 import numpy as np
 
+from simulation import game_round
+
+
+TRACK_START_ROW = 2
+TRACK_START_COL = 1
+
 class Tracks:
   def __init__(self, n_spaces=16, n_camels=5):
     self.n_spaces = n_spaces
@@ -85,6 +91,53 @@ class Tracks:
 
     return True, 'Legal'
 
+  def apply_move(self, move):
+    if self.is_end_of_game():
+      raise ValueError('Game has already ended.')
+
+    start_rows, start_col = self._find_all_camels_to_move(move.camel)
+    end_col = start_col + move.spaces
+    if end_col >= self.max_col:
+      end_col = self.max_col - 1
+
+    end_row = -1
+    while self.state[end_row, end_col] != 0:
+      end_row -= 1
+    end_rows = list(range(end_row, end_row-len(start_rows), -1))
+
+    self.state[end_rows, end_col] = self.state[start_rows, start_col]
+    self.state[start_rows, start_col] = 0
+    
+    
+
+  def _find_all_camels_to_move(self, camel):
+    start_row, start_col = self._find_camel(camel)
+    if start_col == 0:
+      return [start_row], start_col
+    rows = []
+    while start_row >= TRACK_START_ROW and self.state[start_row, start_col] != 0:
+      rows.append(start_row)
+      start_row -= 1
+    return rows, start_col
+
+  def _find_camel(self, camel):
+    idxs = np.argwhere(self.state == camel)
+    idxs = [idx for idx in idxs if idx[0] >= TRACK_START_ROW]  # skip non-tracks.
+    assert len(idxs) == 1  # camel should only be at 1 place
+    return idxs[0]
+
+
+
+
+  @property
+  def max_col(self):
+    return len(self.state[0])
+
+  @property
+  def max_row(self):
+    return len(self.state)
+
+
   def print(self):
     print(self.state)
 
@@ -98,6 +151,15 @@ class Board:
     self.n_players = n_players
 
     self.tracks = Tracks(n_spaces, n_camels)
+    self.round = game_round.GameRound(n_camels=n_camels, n_players=n_players)
+
+
+  def step_randomly(self):
+    if self.round.is_end_of_round():
+      self.round.start_new_round()
+
+    move = self.round.move_camel_random()
+    self.tracks.apply_move(move)
 
 
   def print(self):
