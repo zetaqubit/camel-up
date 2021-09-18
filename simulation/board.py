@@ -8,9 +8,101 @@ Conventions:
   - special space n_spaces+1 in finish zone
 
 """
+from dataclasses import dataclass
+
 import numpy as np
 
 from simulation import game_round
+
+@dataclass
+class CamelState:
+  camel_id: int
+  position: int
+
+@dataclass
+class TileState:
+  player_id: int
+  plus: bool
+  position: None
+
+class TrackState:
+  def __init__(self, n_spaces=16, n_camels=5, n_players=2):
+    self.n_spaces = n_spaces
+    self.n_camels = n_camels
+
+    # List of (camel_id, position), sorted from camel in first position to last,
+    # top camel to bottom at each position.
+    # Special positions:
+    #  0: starting zone
+    #  n_spaces+1: ending zone
+    self.camel_states = [CamelState(camel_id, 0) for camel_id in range(1, n_camels+1)]
+
+    self.player_tiles = [TileState(player_id, True, None) for player_id in range(n_players)]
+
+  def camel_standings(self):
+    return [c.camel_id for c in self.camel_states]
+
+  def apply_move(self, move):
+    if self.is_end_of_game():
+      raise ValueError('Game has already ended.')
+
+    if isinstance(move, CamelState):
+      return self._apply_camel_move(move)
+
+    if isinstance(move, TileState):
+      return self._apply_tile_move(move)
+
+  def _apply_camel_move(self, camel_state):
+    camel_idx = self._find_camel_idx(camel_state.camel_id)
+    start_pos = self.camel_states[camel_idx].position
+    if start_pos == 0:
+      idxs_moving = [camel_idx]
+    else:
+      idxs_moving = self._find_camels_to_move(start_pos, camel_idx)
+
+    end_pos = min(camel_state.position, self.n_spaces+1)
+    for idx in idxs_moving:
+      self.camel_states[idx].position = end_pos + 0.5  # hack to get moving camels to front/top.
+    self.camel_states.sort(key=lambda camel: camel.position, reverse=True)
+    for i in range(len(self.camel_states)):
+      if self.camel_states[i].position == end_pos + 0.5:
+        self.camel_states[i].position = end_pos
+
+
+  def _find_camels_to_move(self, position, end_idx):
+    return [i for i, camel in enumerate(self.camel_states)
+            if camel.position == position and i <= end_idx]
+
+  def _apply_tile_move(self, tile_state):
+    self.player_tiles[tile_state.player_id] = tile_state
+
+  def _find_camel_idx(self, camel_id):
+    for idx, camel in enumerate(self.camel_states):
+      if camel.camel_id == camel_id:
+        return idx
+
+  def find_camel(self, camel_id):
+    return self.camel_states[self._find_camel_idx(camel_id)]
+
+
+  def is_end_of_game(self):
+    # Check if first camel is in the ending zone.
+    return self.camel_states[0].position > self.n_spaces
+
+  def render_to_array(self):
+    a = np.zeros((self.n_camels, self.n_spaces+2), dtype=np.int)
+    for i, camel in enumerate(self.camel_states):
+      row = self.n_camels - 1
+      while a[row, camel.position] != 0:
+        row -= 1
+      a[row, camel.position] = camel.camel_id
+
+      if i == len(self.camel_states) - 1 or self.camel_states[i+1].position != camel.position:
+        a[row:self.n_camels, camel.position] = a[row:self.n_camels, camel.position][::-1]
+    return a
+
+  def print(self):
+    print(self.render_to_array())
 
 
 TRACK_START_ROW = 2
@@ -95,7 +187,7 @@ class Tracks:
     if self.is_end_of_game():
       raise ValueError('Game has already ended.')
 
-    start_rows, start_col = self._find_all_camels_to_move(move.camel)
+    start_rows, start_col = self._find_all_camels_to_move(move.camel_id)
     end_col = start_col + move.spaces
     if end_col >= self.max_col:
       end_col = self.max_col - 1
@@ -127,8 +219,6 @@ class Tracks:
     return idxs[0]
 
 
-
-
   @property
   def max_col(self):
     return len(self.state[0])
@@ -150,17 +240,20 @@ class Board:
     self.n_camels = n_camels
     self.n_players = n_players
 
-    self.tracks = Tracks(n_spaces, n_camels)
-    self.round = game_round.GameRound(n_camels=n_camels, n_players=n_players)
-
+    self.tracks = TrackState(n_spaces, n_camels, n_players)
+    self.round = game_round.GameRound(self.tracks)
 
   def step_randomly(self):
     if self.round.is_end_of_round():
       self.round.start_new_round()
 
-    move = self.round.move_camel_random()
-    self.tracks.apply_move(move)
+    move = self.round.get_camel_move()
+    print(move)
+    self.apply_move(move)
 
+  def apply_move(self, move):
+    self.round.apply_move(move)
+    self.tracks.apply_move(move)
 
   def print(self):
     self.tracks.print()

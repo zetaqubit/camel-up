@@ -5,8 +5,8 @@ import unittest
 import numpy as np
 from parameterized import parameterized
 
+from simulation import board
 from simulation import game_round
-from simulation import moves
 
 
 class GameRoundTest(unittest.TestCase):
