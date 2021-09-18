@@ -16,6 +16,7 @@ bazel-blaze_root
 
 # Python
 *.pyc
+**/__pycache__/
 
 # IPython Notebook
 .ipynb_checkpoints/
