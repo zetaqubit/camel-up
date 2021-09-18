@@ -56,7 +56,7 @@ def main(_):
   b = board.Board(FLAGS.n_spaces, FLAGS.n_camels, FLAGS.n_players)
 
   # Apply initial states if provided.
-  init_state = json.loads(FLAGS.initial_state)
+  init_state = json.loads(FLAGS.initial_state) if FLAGS.initial_state else {}
 
   if 'camel_states' in init_state:
     camel_states = init_state['camel_states']
